@@ -1,4 +1,4 @@
-const APP_CACHE_NAME = 'my-site-cache-v3'; // غيّر الإصدار (v2, v3, إلخ) عند كل تحديث كبير
+const APP_CACHE_NAME = 'my-site-cache-v4'; // غيّر الإصدار (v2, v3, إلخ) عند كل تحديث كبير
 const urlsToCache = [
   '/',              // Home page
   '/index.html',

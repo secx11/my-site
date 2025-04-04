@@ -138,3 +138,28 @@ function searchWebsite() {
   performSearch(searchInput.value.trim());
   suggestionsContainer.style.display = "none";
 }
+
+// التحقق من الوضع المحفوظ عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('themeToggle').textContent = '☀ الوضع النهاري';
+  } else {
+      document.getElementById('themeToggle').textContent = '🌙 الوضع الليلي';
+  }
+});
+
+// تبديل الوضع عند الضغط على الزر
+document.getElementById('themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  
+  // تحديث نص الزر وحفظ الإعداد
+  if (document.body.classList.contains('dark-mode')) {
+      document.getElementById('themeToggle').textContent = '☀ الوضع النهاري';
+      localStorage.setItem('theme', 'dark');
+  } else {
+      document.getElementById('themeToggle').textContent = '🌙 الوضع الليلي';
+      localStorage.setItem('theme', 'light');
+  }
+});
