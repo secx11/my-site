@@ -4,28 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>صفحتي الرئيسية</title>
-    <link rel="stylesheet" href="style.css" onerror="this.onerror=null;alert('Failed to load style.css');">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+	<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FCJQ9RJQ0V"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FCJQ9RJQ0V');
+</script>
 </head>
 <body>
     <div class="header">
         <div>المملكة العربية السعودية - إدارة كهرباء القصيم</div>
         <div>دائرة دعم العمليات والصيانة - قسم التشغيل - مركز بريدة</div>
-        <button id="themeToggle" class="theme-toggle">🌓 تبديل الوضع</button>
     </div>
         
     <div class="container">
-        <img src="https://drive.google.com/uc?export=view&id=1Xg6983BmdFWri7wkpwnZ0AwgJ7SGqBzH" alt="صورتي">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="ابحث عن الموقع..." >
-            <button onclick="searchWebsite()">ابحث</button>
-            <div id="resultsContainer"></div>
-        </div>
+        <img src="https://www2.0zz0.com/2025/04/09/19/540933648.png" alt="شعار الشركة السعودية للكهرباء" class="logo">
+                   <div class="search-box">
+			<input type="text" id="searchInput" placeholder="ابحث عن الموقع..." />
+			<div id="suggestions" class="suggestions"></div> <!-- قائمة الاقتراحات -->
+			<button onclick="searchWebsite()">ابحث</button>
+		<div id="resultsContainer"></div>
+	 </div>
     </div>
    <footer class="signature">
     sec
-	</footer>
-
+</footer>
+    
     <script src="script.js"></script>
 </body>
 </html>
