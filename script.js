@@ -1,101 +1,144 @@
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('Service Worker مسجل بنجاح:', registration);
+let websites = {};
+let dataLoaded = false;
+
+function loadWebsitesData() {
+  if (dataLoaded) return Promise.resolve();
+
+  // قائمة الملفات التي تريد تحميلها
+  const files = ['data/websites.json', 'data/websites1.json', 'data/websites2.json'];
+
+  const fetchPromises = files.map(file =>
+    fetch(file)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`file to load ${file}`);
+        }
+        return res.json();
       })
-      .catch(error => {
-        console.log('فشل تسجيل Service Worker:', error);
+  );
+
+  return Promise.all(fetchPromises)
+    .then(dataArray => {
+      // دمج البيانات من جميع الملفات
+      dataArray.forEach(data => {
+        Object.assign(websites, data);
       });
+      dataLoaded = true;
+      console.log('All websites data loaded:', websites);
+    })
+    .catch(error => {
+      console.error('Error loading websites data:', error);
+    });
+}
+
+// وظيفة للحصول على رابط باستخدام المفتاح
+function getWebsiteByKey(key) {
+  if (!dataLoaded) {
+    console.error('Data not loaded yet. Call loadWebsitesData first.');
+    return null;
+  }
+
+  return websites[key] || 'Key not found';
+}
+
+// تحميل البيانات وتجربة الوصول لها
+loadWebsitesData().then(() => {
+  console.log(getWebsiteByKey("79906")); // يعرض الرابط إذا كان المفتاح موجودًا
+});
+// عدّل دوال البحث والاقتراحات لتنتظر تحميل البيانات أولاً:
+function showSuggestions(searchTerm) {
+  loadWebsitesData().then(() => {
+    // ...نفس الكود السابق لعرض الاقتراحات...
   });
 }
 
-let websites = {};
-
-// جلب البيانات من data.json
-fetch("data.json")
-  .then(response => {
-    if (!response.ok) {
-      throw new Error("فشل في جلب البيانات");
-    }
-    return response.json();
-  })
-  .then(data => {
-    websites = data;
-    console.log("تم تحميل البيانات:", websites);
-  })
-  .catch(error => {
-    console.error("خطأ:", error);
-    document.getElementById("resultsContainer").textContent = "حدث خطأ أثناء تحميل البيانات.";
+function performSearch(searchTerm) {
+  loadWebsitesData().then(() => {
+    // ...نفس كود البحث السابق...
   });
+}
 
-// باقي الكود (showSuggestions, performSearch, إلخ) كما هو
-
-// عناصر DOM
+const feedbackBtn = document.getElementById("feedbackBtn");
+const feedbackModal = document.getElementById("feedbackModal");
+const closeModal = document.getElementById("closeModal");
 const searchInput = document.getElementById("searchInput");
 const resultsContainer = document.getElementById("resultsContainer");
 const suggestionsContainer = document.getElementById("suggestions");
+const submitFeedback = document.getElementById("submitFeedback");
+const resetForm = document.getElementById("resetForm");
+const feedbackType = document.getElementById("feedbackType");
+const equipmentType = document.getElementById("equipmentType");
+const equipmentCode = document.getElementById("equipmentCode");
+const equipmentLink = document.getElementById("equipmentLink");
+const correctionReason = document.getElementById("correctionReason");
+const correctionReasonLabel = document.getElementById("correctionReasonLabel");
+const feedbackMsg = document.getElementById("feedbackMsg");
 
-// جلب البيانات من ملف JSON
-fetch("data.json")
-  .then(response => {
-    if (!response.ok) {
-      throw new Error("فشل في جلب البيانات");
+// فتح نافذة الملاحظات
+if (feedbackBtn) {
+  feedbackBtn.onclick = function() {
+    feedbackModal.style.display = "flex";
+  };
+}
+
+// إغلاق النافذة
+if (closeModal) {
+  closeModal.onclick = function() {
+    feedbackModal.style.display = "none";
+  };
+}
+
+// إغلاق عند الضغط خارج النموذج
+if (feedbackModal) {
+  window.onclick = function(event) {
+    if (event.target === feedbackModal) {
+      feedbackModal.style.display = "none";
     }
-    return response.json();
-  })
-  .then(data => {
-    websites = data; // تعبئة الكائن بالبيانات
-    console.log("تم تحميل البيانات:", websites); // للتأكد من التحميل
-  })
-  .catch(error => {
-    console.error("خطأ:", error);
-    resultsContainer.textContent = "حدث خطأ أثناء تحميل البيانات.";
-    resultsContainer.className = "error-message";
+  };
+}
+
+// البحث التلقائي مع تأخير
+let searchTimer;
+if (searchInput) {
+  searchInput.addEventListener("input", function() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      showSuggestions(this.value.trim());
+    }, 300);
   });
 
-// البحث التلقائي مع تأخير (debounce)
-let searchTimer;
-searchInput.addEventListener("input", function() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    showSuggestions(this.value.trim());
-  }, 300);
-});
-
-// ضغط Enter في حقل البحث
-searchInput.addEventListener("keypress", function(e) {
-  if (e.key === "Enter") {
-    performSearch(this.value.trim());
-    suggestionsContainer.style.display = "none";
-  }
-});
-
-// إخفاء الاقتراحات عند النقر خارج الحقل
-document.addEventListener("click", (e) => {
-    if (e.target !== searchInput && !suggestionsContainer.contains(e.target)) {
+  searchInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      performSearch(this.value.trim());
       suggestionsContainer.style.display = "none";
     }
   });
+}
+
+if (suggestionsContainer) {
+  document.addEventListener("click", function(e) {
+    if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+      suggestionsContainer.style.display = "none";
+    }
+  });
+}
 
 function showSuggestions(searchTerm) {
-  while (suggestionsContainer.firstChild) {
-    suggestionsContainer.removeChild(suggestionsContainer.firstChild);
-  }
+  suggestionsContainer.innerHTML = "";
   suggestionsContainer.style.display = "none";
 
-  if (!searchTerm || Object.keys(websites).length === 0) {
+  if (!searchTerm) {
     return;
   }
 
-  const matchingKeys = Object.keys(websites).filter(key =>
-    key.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const matchingKeys = Object.keys(websites)
+    .filter(key => key.toLowerCase().includes(searchTerm.toLowerCase()))
+    .slice(0, 5);
 
   if (matchingKeys.length > 0) {
     matchingKeys.forEach(key => {
       const suggestionItem = document.createElement("div");
-      suggestionItem.textContent = key; // يمكنك إضافة websites[key].desc إذا استخدمت هيكل مع وصف
+      suggestionItem.textContent = key;
       suggestionItem.className = "suggestion-item";
       suggestionItem.addEventListener("click", () => {
         searchInput.value = key;
@@ -109,9 +152,11 @@ function showSuggestions(searchTerm) {
 }
 
 function performSearch(searchTerm) {
-  resultsContainer.innerHTML = "";
+  resultsContainer.innerHTML = "<p>جارٍ البحث...</p>";
 
-  if (!searchTerm || Object.keys(websites).length === 0) {
+  if (!searchTerm) {
+    resultsContainer.innerHTML = "<p>الرجاء إدخال كلمة للبحث</p>";
+    resultsContainer.className = "error-message";
     return;
   }
 
@@ -120,46 +165,159 @@ function performSearch(searchTerm) {
   );
 
   if (foundKey) {
+    resultsContainer.innerHTML = "";
     const linkElement = document.createElement("a");
-    // التحقق مما إذا كان القيمة سلسلة أو كائن
-    const url = typeof websites[foundKey] === "string" ? websites[foundKey] : websites[foundKey].url;
-    linkElement.href = url;
+    linkElement.href = websites[foundKey];
     linkElement.textContent = "انقر هنا للانتقال إلى الموقع";
     linkElement.target = "_blank";
     linkElement.className = "result-link";
     resultsContainer.appendChild(linkElement);
   } else {
-    resultsContainer.textContent = "لم يتم العثور على الموقع المطلوب.";
+    resultsContainer.innerHTML = "<p>لم يتم العثور على الموقع المطلوب.</p>";
     resultsContainer.className = "error-message";
   }
 }
 
-function searchWebsite() {
-  performSearch(searchInput.value.trim());
-  suggestionsContainer.style.display = "none";
+// إظهار/إخفاء حقل سبب التعديل في feedback.html و modal
+if (feedbackType) {
+  feedbackType.addEventListener("change", function() {
+    if (this.value === "تصحيح") {
+      correctionReason.style.display = "block";
+      correctionReasonLabel.style.display = "block";
+      correctionReason.required = true;
+    } else {
+      correctionReason.style.display = "none";
+      correctionReasonLabel.style.display = "none";
+      correctionReason.required = false;
+    }
+  });
 }
 
-// التحقق من الوضع المحفوظ عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') {
-      document.body.classList.add('dark-mode');
-      document.getElementById('themeToggle').textContent = '☀ الوضع النهاري';
-  } else {
-      document.getElementById('themeToggle').textContent = '🌙 الوضع الليلي';
-  }
-});
+// معاينة رابط خرائط Google
+if (equipmentLink) {
+  equipmentLink.addEventListener("input", function() {
+    const link = this.value.trim();
+    if (link.includes("maps.app.goo.gl")) {
+      feedbackMsg.textContent = "الرابط صالح!";
+      feedbackMsg.className = "";
+    } else {
+      feedbackMsg.textContent = "الرجاء إدخال رابط خرائط Google صالح.";
+      feedbackMsg.className = "error";
+    }
+  });
+}
 
-// تبديل الوضع عند الضغط على الزر
-document.getElementById('themeToggle').addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-  
-  // تحديث نص الزر وحفظ الإعداد
-  if (document.body.classList.contains('dark-mode')) {
-      document.getElementById('themeToggle').textContent = '☀ الوضع النهاري';
-      localStorage.setItem('theme', 'dark');
-  } else {
-      document.getElementById('themeToggle').textContent = '🌙 الوضع الليلي';
-      localStorage.setItem('theme', 'light');
-  }
-});
+// إرسال النموذج إلى Google Forms
+if (submitFeedback) {
+  submitFeedback.onclick = function(e) {
+    e.preventDefault();
+    const type = feedbackType.value;
+    const equipType = equipmentType.value;
+    const code = equipmentCode.value.trim();
+    const link = equipmentLink.value.trim();
+    const reason = correctionReason.value.trim();
+
+    // التحقق من الحقول
+    if (!equipType) {
+      feedbackMsg.textContent = "الرجاء اختيار نوع المعدة.";
+      feedbackMsg.className = "error";
+      return;
+    }
+    if (!code || !link) {
+      feedbackMsg.textContent = "الرجاء إدخال رمز المعدة ورابط خرائط Google.";
+      feedbackMsg.className = "error";
+      return;
+    }
+    if (type === "تصحيح" && !reason) {
+      feedbackMsg.textContent = "الرجاء إدخال سبب التعديل.";
+      feedbackMsg.className = "error";
+      return;
+    }
+    if (!link.includes("maps.app.goo.gl")) {
+      feedbackMsg.textContent = "الرجاء إدخال رابط خرائط Google صالح.";
+      feedbackMsg.className = "error";
+      return;
+    }
+
+    // إرسال البيانات إلى Google Forms
+    const formData = new FormData();
+    formData.append("entry.1768981552", type);
+    formData.append("entry.1223622662", equipType);
+    formData.append("entry.507274621", code);
+    formData.append("entry.838611703", link);
+    formData.append("entry.826576113", reason);
+
+    fetch("https://docs.google.com/forms/d/e/1FAIpQLSfBKCbDVJ-ju6LuwL7qKXP2L7cav0wWQVv99ojK2b_HWpdMFw/formResponse", {
+      method: "POST",
+      body: formData
+    })
+      .then(response => {
+        if (response.ok || response.type === "opaque") {
+          feedbackMsg.textContent = "تم إرسال الإدخال بنجاح!";
+          feedbackMsg.className = "";
+          equipmentType.value = "";
+          equipmentCode.value = "";
+          equipmentLink.value = "";
+          correctionReason.value = "";
+          correctionReason.style.display = "none";
+          correctionReasonLabel.style.display = "none";
+          feedbackType.value = "إضافة";
+          setTimeout(() => {
+            feedbackMsg.textContent = "";
+            if (feedbackModal) feedbackModal.style.display = "none";
+          }, 3000);
+        } else {
+          throw new Error("فشل إرسال النموذج");
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        feedbackMsg.textContent = "";
+        feedbackMsg.className = "error";
+      });
+
+    // تخزين احتياطي في localStorage
+    const feedbackList = JSON.parse(localStorage.getItem("feedbackList") || "[]");
+    feedbackList.push({
+      type,
+      equipmentType: equipType,
+      code,
+      link,
+      reason: type === "تصحيح" ? reason : "",
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem("feedbackList", JSON.stringify(feedbackList));
+  };
+}
+
+// إعادة تعيين النموذج
+if (resetForm) {
+  resetForm.onclick = function() {
+    equipmentType.value = "";
+    equipmentCode.value = "";
+    equipmentLink.value = "";
+    correctionReason.value = "";
+    correctionReason.style.display = "none";
+    correctionReasonLabel.style.display = "none";
+    feedbackType.value = "إضافة";
+    feedbackMsg.textContent = "تم إعادة تعيين النموذج.";
+    feedbackMsg.className = "";
+    setTimeout(() => {
+      feedbackMsg.textContent = "";
+    }, 3000);
+  };
+}
+
+// اختصار Ctrl+Enter للإرسال
+if (equipmentCode && equipmentLink && correctionReason) {
+  equipmentCode.addEventListener("keypress", function(e) {
+    if (e.ctrlKey && e.key === "Enter") submitFeedback.click();
+  });
+  equipmentLink.addEventListener("keypress", function(e) {
+    if (e.ctrlKey && e.key === "Enter") submitFeedback.click();
+  });
+  correctionReason.addEventListener("keypress", function(e) {
+    if (e.ctrlKey && e.key === "Enter") submitFeedback.click();
+  });
+}
+// عرض الملاحظات المخزنة في localStorage
